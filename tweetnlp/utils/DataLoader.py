@@ -22,7 +22,7 @@ class DataLoader:
     emb_dim = 5
     seed = 1337
 
-    def __init__(self, dataset_path=None, wv_path=os.path.join(BASE_DIR, 'pickles', 'pinoy_wv_dict_05.pickle'), task='classification'):
+    def __init__(self, dataset_path=None, wv_path=os.path.join(BASE_DIR, 'pickles', 'pinoy_wv_dict_05.pickle'), task='classification', has_label=True):
         """Initialize the DataLoader
 
         Arguments:
@@ -31,22 +31,29 @@ class DataLoader:
         """
         # Load dataset
         if type(dataset_path) == str:
-            self.dataset = pd.read_csv(
-                dataset_path, sep='\t', names=['y', 'x'])
+            if has_label == True:
+                self.dataset = pd.read_csv(
+                    dataset_path, sep='\t', names=['y', 'x'])
+            else:
+                self.dataset = pd.read_csv(
+                    dataset_path, sep='\t', names=['x'])
 
         # Load word vector dictionary
-        if type(wv_path) == str:
+        if type(wv_path) == str and has_label == True:
             with open(wv_path, 'rb') as file:
                 self.wv_dict = pickle.load(file)
             self.get_embedding_weights()
 
         # Set the task to perform (either classification or regression)
         self.task = task
+        
+        # Set has_label
+        self.has_label = has_label
 
         # Reset the class_dict
-        if self.task == 'classification':
+        if self.task == 'classification' and has_label == True:
             self.create_class_dict()
-        elif self.task == 'regression':
+        elif self.task == 'regression' and has_label == True:
             self.class_dict = None
             self.dataset_summary = self.dataset.describe()
 
@@ -88,7 +95,7 @@ class DataLoader:
             w2v_model {word2vec} -- a gensim word2vec model
         """
         words, vectors = [], []
-        for key in w2v_model.wv.vocab.keys():
+        for key in sorted(w2v_model.wv.vocab.keys()):
             words.append(key)
             vectors.append(w2v_model.wv[key])
 
@@ -234,7 +241,7 @@ class DataLoader:
         # Tokenize the input data
         x = self.tokenize_dataset(self.dataset['x'], verbose=verbose)
 
-        if self.task == 'classification':
+        if self.task == 'classification' and self.has_label == True:
             # Create dataset summary
             self.summarize_dataset()
 
@@ -248,15 +255,24 @@ class DataLoader:
             # Stratify
             stratify = y
 
-        elif self.task == 'regression':
+        elif self.task == 'regression' and self.has_label == True:
             y = self.dataset[x_cols]
             # Don't stratify
             stratify = None
+        
+        elif self.has_label == False:
+            # Vectorize the input data
+            self.maxlen = maxlen
+            x = self.vectorize_x(x, self.wv_dict, maxlen=self.maxlen)
 
         # Create train and test datasets
-        x_train, x_test, y_train, y_test = train_test_split(x, y,
+        if self.has_label == True:
+            x_train, x_test, y_train, y_test = train_test_split(x, y,
                                                             stratify=stratify,
                                                             random_state=self.seed,
                                                             **kwargs)
+        else:
+            x_train, x_test = train_test_split(x, random_state=self.seed, **kwargs)
+            y_train, y_test = None, None
 
         return x_train, x_test, y_train, y_test
