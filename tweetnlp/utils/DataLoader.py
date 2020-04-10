@@ -105,9 +105,20 @@ class DataLoader:
 
         self.wv_dict = {words[i]: vectors[i] for i in range(len(words))}
 
-    def save_wv_dict(self, filename):
+    def save_wv_dict(self, filename, save_type='pickle'):
+        """Allow saving of created word2vec dictionary
+
+        Arguments:
+            filename {str} -- filename of output file
+            save_type {str} -- use 'pickle' to save as pickle; else, use 'list' to save as a sorted list
+        """
         with open(filename, 'wb') as f:
-            pickle.dump(self.wv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+            if save_type == 'pickle':
+                pickle.dump(self.wv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+            elif save_type == 'list':
+                for idx, key in enumerate(sorted(self.wv_dict.keys)):
+                    data = str(idx + 2) + '\t' + key + '\n'
+                    f.write(data.encode())
 
     def get_embedding_weights(self, emb_dim=None):
         """Create embedding weights for transfer learning
