@@ -22,7 +22,8 @@ class DataLoader:
     emb_dim = 5
     seed = 1337
 
-    def __init__(self, dataset_path=None, wv_path=os.path.join(BASE_DIR, 'pickles', 'pinoy_wv_dict_05.pickle'), task='classification', has_label=True):
+    def __init__(self, dataset_path=None, wv_path=os.path.join(BASE_DIR, 'pickles', 'pinoy_wv_dict_05.pickle'),
+                 w2v_model=None, task='classification', has_label=True):
         """Initialize the DataLoader
 
         Arguments:
@@ -40,13 +41,16 @@ class DataLoader:
 
         # Load word vector dictionary
         if type(wv_path) == str and has_label == True:
-            with open(wv_path, 'rb') as file:
-                self.wv_dict = pickle.load(file)
+            if w2v_model == None:
+                with open(wv_path, 'rb') as file:
+                    self.wv_dict = pickle.load(file)
+            else:
+                self.create_dict_from_w2v(w2v_model)
             self.get_embedding_weights()
 
         # Set the task to perform (either classification or regression)
         self.task = task
-        
+
         # Set has_label
         self.has_label = has_label
 
@@ -101,14 +105,25 @@ class DataLoader:
 
         self.wv_dict = {words[i]: vectors[i] for i in range(len(words))}
 
-    def get_embedding_weights(self, emb_dim=5):
+    def save_wv_dict(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self.wv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def get_embedding_weights(self, emb_dim=None):
         """Create embedding weights for transfer learning
 
         Arguments:
             emb_dim {int} -- the number of dimension the embedding has
         """
 
-        self.emb_dim = emb_dim
+        # Get embedding dimension
+        if emb_dim == None:
+            # Infer dimension from wv_dict
+            key_1 = list(self.wv_dict.keys())[0]
+            self.emb_dim = self.wv_dict[key_1].shape[0]
+        else:
+            self.emb_dim = emb_dim
+
         embedding_weights = np.zeros((len(self.wv_dict) + 2, self.emb_dim))
         for idx, word in enumerate(sorted(self.wv_dict.keys())):
             try:
@@ -259,7 +274,7 @@ class DataLoader:
             y = self.dataset[x_cols]
             # Don't stratify
             stratify = None
-        
+
         elif self.has_label == False:
             # Vectorize the input data
             self.maxlen = maxlen
@@ -268,11 +283,12 @@ class DataLoader:
         # Create train and test datasets
         if self.has_label == True:
             x_train, x_test, y_train, y_test = train_test_split(x, y,
-                                                            stratify=stratify,
-                                                            random_state=self.seed,
-                                                            **kwargs)
+                                                                stratify=stratify,
+                                                                random_state=self.seed,
+                                                                **kwargs)
         else:
-            x_train, x_test = train_test_split(x, random_state=self.seed, **kwargs)
+            x_train, x_test = train_test_split(
+                x, random_state=self.seed, **kwargs)
             y_train, y_test = None, None
 
         return x_train, x_test, y_train, y_test
