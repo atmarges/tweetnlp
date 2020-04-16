@@ -129,6 +129,7 @@ class DataLoader:
             dim {int} -- the desired dimension for the wv_dict
             seed {int} -- a seed value used for the algorithm's random_state
         """
+
         word_vectors = []
         for key in sorted(self.wv_dict.keys()):
             word_vectors.append(self.wv_dict[key])
