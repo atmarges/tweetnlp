@@ -122,6 +122,13 @@ class DataLoader:
                     f.write(data.encode())
 
     def reduce_dimension(self, algorithm=PCA, dim=5, seed=1337):
+        """Reduce the dimension of the loaded wv_dict
+
+        Arguments:
+            algorithm {dimensionality reduction algorithm} -- a dimesionality reduction algorithm with a fit_transform function. Set to sklearn's PCA by default.
+            dim {int} -- the desired dimension for the wv_dict
+            seed {int} -- a seed value used for the algorithm's random_state
+        """
         word_vectors = []
         for key in sorted(self.wv_dict.keys()):
             word_vectors.append(self.wv_dict[key])
