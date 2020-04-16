@@ -9,6 +9,7 @@ import pickle
 
 import keras
 from sklearn.model_selection import train_test_split
+from sklearn.decomposition import PCA
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -119,6 +120,17 @@ class DataLoader:
                 for idx, key in enumerate(sorted(self.wv_dict.keys)):
                     data = str(idx + 2) + '\t' + key + '\n'
                     f.write(data.encode())
+
+    def reduce_dimension(self, algorithm=PCA, dim=5, seed=1337):
+        word_vectors = []
+        for key in sorted(self.wv_dict.keys()):
+            word_vectors.append(self.wv_dict[key])
+
+        algo = algorithm(n_components=dim, random_state=seed)
+        reduced_wv = algo.fit_transform(word_vectors)
+
+        for idx, key in enumerate(sorted(self.wv_dict.keys())):
+            self.wv_dict[key] = reduced_wv[idx]
 
     def get_embedding_weights(self, emb_dim=None):
         """Create embedding weights for transfer learning

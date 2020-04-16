@@ -3,7 +3,6 @@
 #
 # tweetokenize: Regular expression based tokenizer for Twitter
 # Copyright: (c) 2013, Jared Suttles. All rights reserved.
-# Modified for processing Philippine tweets
 # License: BSD, see LICENSE for details.
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
