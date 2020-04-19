@@ -34,7 +34,7 @@ class DataLoader:
         """
         # Load dataset
         if type(dataset_path) == str:
-            dataset_path = file_path.encode(
+            dataset_path = dataset_path.encode(
                 'unicode-escape').decode().replace('\\\\', '\\')  # Fix windows path
 
             if has_label == True:
