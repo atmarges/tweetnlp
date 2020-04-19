@@ -24,15 +24,19 @@ class DataLoader:
     seed = 1337
 
     def __init__(self, dataset_path=None, wv_path=os.path.join(BASE_DIR, 'pickles', 'pinoy_wv_dict_05.pickle'),
-                 w2v_model=None, task='classification', has_label=True):
+                 w2v_model=None, task='classification', has_label=True, dim=None):
         """Initialize the DataLoader
 
         Arguments:
             dataset_path {str} -- location of the dataset
             wv_path {str} -- location of the word vector dictionary
+            w2v_model {gensim word2vec} -- load a trained word2vec model to be used as wv_dict
         """
         # Load dataset
         if type(dataset_path) == str:
+            dataset_path = file_path.encode(
+                'unicode-escape').decode().replace('\\\\', '\\')  # Fix windows path
+
             if has_label == True:
                 self.dataset = pd.read_csv(
                     dataset_path, sep='\t', names=['y', 'x'])
@@ -61,6 +65,10 @@ class DataLoader:
         elif self.task == 'regression' and has_label == True:
             self.class_dict = None
             self.dataset_summary = self.dataset.describe()
+
+        # Reduce dimensionality
+        if dim:
+            self.reduce_dimension(dim=dim)
 
     def set_dataset(self, dataset, task='classification'):
         """Input an already loaded dataset
